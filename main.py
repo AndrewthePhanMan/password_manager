@@ -1,3 +1,4 @@
+import os
 from cryptography.fernet import Fernet
 
 class PaswordManager:
@@ -7,22 +8,84 @@ class PaswordManager:
         self.password_dict = {}
 
     def create_key(self, path):
+        if os.path.exists(path):
+            print(f"A key exists at '{path}'. Would you like to overwrite it?")
+            print("This will make any passwords encrypted with the old key unreadable.")
+
+            while True:
+                overwrite = input("(y/n): ").strip().lower()
+                
+                if overwrite == 'y':
+                    break
+                elif overwrite == 'n':
+                    print("Overwrite has been cancelled. Existing key unchanged.")
+                    return
+                else:
+                    print("Invalid option. Please enter 'y' or 'n'.")
+
         self.key = Fernet.generate_key()
+
         with open(path, 'wb') as f:
             f.write(self.key)
+        
+        print(f"New key created at '{path}'.")
 
     def load_key(self, path):
+        if not os.path.exists(path):
+            while True:
+                create = input(f"No key found at '{path}'. Would you like to create one there? (y/n): ").strip().lower()
+                if create == 'y':
+                    self.create_key(path)
+                    return
+                elif create == 'n':
+                    print("Creation has been cancelled. No key was loaded.")
+                    return
+                else:
+                    print("Invalid option. Please enter 'y' or 'n'.")
+        
         with open(path, 'rb') as f:
             self.key = f.read()
 
     def create_password_file(self, path, dict=None):
+        if os.path.exists(path):
+            print(f"A password file exists at '{path}'. Would you like to overwrite it?")
+            print("This will make any passwords in the file unreadable.")
+
+            while True:
+                overwrite = input("(y/n): ").strip().lower()
+                
+                if overwrite == 'y':
+                    break
+                elif overwrite == 'n':
+                    print("Overwrite has been cancelled. Existing password file unchanged.")
+                    return
+                else:
+                    print("Invalid option. Please enter 'y' or 'n'.")
+        
         self.password_file = path
+        open(path, 'w').close()
 
         if dict is not None:
             for site, password in dict.items():
                 self.add_password(site, password)
 
     def load_password_file(self, path):
+        if self.key is None:
+            print("No key is loaded. Please create/load a key before loading a password file.")
+            return
+
+        if not os.path.exists(path):
+            while True:
+                create = input(f"No password file found at '{path}'. Would you like to create an empty one there? (y/n): ").strip().lower()
+                if create == 'y':
+                    self.create_password_file(path)
+                    return
+                elif create == 'n':
+                    print("Creation has been cancelled. No password file was loaded.")
+                    return
+                else:
+                    print("Invalid option. Please enter 'y' or 'n'.")
+        
         self.password_file = path
 
         with open(path, 'r') as f:
