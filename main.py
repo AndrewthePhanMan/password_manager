@@ -94,6 +94,10 @@ class PaswordManager:
                 self.password_dict[site] = Fernet(self.key).decrypt(encrypted.encode()).decode()
 
     def add_password(self, site, password):
+        if self.key is None:
+            print("No key is loaded. Please create/load a key before loading a password file.")
+            return
+
         self.password_dict[site] = password
 
         if self.password_file is not None:
@@ -102,6 +106,9 @@ class PaswordManager:
                 f.write(site + ":" + encrypted.decode() + "\n")
 
     def get_password(self, site):
+        if site not in self.password_dict:
+            print(f"No password found for {site}.")
+            return None        
         return self.password_dict[site]
 
 def main():
